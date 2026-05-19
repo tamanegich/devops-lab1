@@ -12,16 +12,16 @@
 > > Опис застосунку: **Task Tracker** --- сервіс для відстеження задач.  
 > > Об'єкт задачі має наступні поля:
 > >
-> > > id  
-> > > title  
-> > > status  
-> > > created_at
+> > - id
+> > - title
+> > - status
+> > - created_at
 > >
 > > API сервісу складається з 3 ендпоінтів:
 > >
-> > > GET /tasks --- вивести усі задачі (id, title, status, created_at)  
-> > > POST /tasks (title) --- створити нову задачу  
-> > > POST /tasks/\<id>/done --- змінити статус задачі на виконано
+> > - GET /tasks --- вивести усі задачі (id, title, status, created_at)
+> > - POST /tasks (title) --- створити нову задачу
+> > - POST /tasks/\<id>/done --- змінити статус задачі на виконано
 >
 > ### V5 = 3
 >
