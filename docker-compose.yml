@@ -1,0 +1,73 @@
+services:
+
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: taskdb
+      MYSQL_USER: taskuser
+      MYSQL_PASSWORD: taskpassword
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - tasknet
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tasknet
+    command:
+      - node
+      - server.js
+      - --port=3000
+      - --db-host=db
+      - --db-port=3306
+      - --db-user=taskuser
+      - --db-password=taskpassword
+      - --db-name=taskdb
+
+  migrate:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tasknet
+    command:
+      - node
+      - migrate.js
+      - --db-host=db
+      - --db-port=3306
+      - --db-user=taskuser
+      - --db-password=taskpassword
+      - --db-name=taskdb
+    restart: on-failure
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - tasknet
+
+networks:
+  tasknet:
+    driver: bridge
+
+volumes:
+  db_data:
