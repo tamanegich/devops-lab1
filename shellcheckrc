@@ -1,9 +1,8 @@
-# shellcheck configuration
-# https://www.shellcheck.net/wiki/Directive
-
-# Target shell — install.sh uses bash-specific features
+# Target shell
 shell=bash
 
-# SC2034: variable appears unused — suppress for variables used via indirect
-# expansion or sourced scripts
+# SC2034: variable appears unused
 disable=SC2034
+
+# SC1091: not following sourced files (e.g. /etc/os-release)
+disable=SC1091
