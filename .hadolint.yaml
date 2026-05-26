@@ -1,0 +1,13 @@
+# hadolint configuration
+# https://github.com/hadolint/hadolint
+
+failure-threshold: error
+
+ignore:
+    # DL3008: pin versions in apt — not applicable (node:slim uses apt but we don't call apt)
+    # DL3018: pin versions in apk — not applicable
+    # DL3059: multiple RUN instructions — intentional for layer caching
+
+trustedRegistries:
+    - docker.io
+    - ghcr.io
