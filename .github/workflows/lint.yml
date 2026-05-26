@@ -36,7 +36,7 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Run Shellcheck
-              run: shellcheck install-arch.sh install-ubuntu.sh scripts/deploy.sh scripts/verify.sh setup-runner.sh
+              run: shellcheck install.sh install-ubuntu.sh scripts/deploy.sh scripts/verify.sh setup-runner.sh
 
     hadolint:
         name: Hadolint
