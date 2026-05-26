@@ -1,0 +1,38 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - master
+        tags:
+            - "v[0-9]*"
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    test:
+        name: Jest
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run tests with coverage
+              run: npm test
+
+            - name: Upload coverage report
+              if: github.ref == 'refs/heads/master'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage/
+                  retention-days: 30

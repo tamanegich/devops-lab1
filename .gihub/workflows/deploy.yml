@@ -1,0 +1,71 @@
+name: Deploy
+
+on:
+    push:
+        tags:
+            - "v[0-9]*"
+
+jobs:
+    check-build:
+        name: Verify build passed
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check build workflow conclusion
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        head_sha: context.sha,
+                        per_page: 20,
+                      });
+                      const run = runs.data.workflow_runs.find(
+                        r => r.name === 'Build' && r.head_sha === context.sha
+                      );
+                      if (!run) {
+                        core.setFailed('Build workflow not found for this commit');
+                      } else if (run.conclusion !== 'success') {
+                        core.setFailed(`Build workflow did not succeed (status: ${run.conclusion})`);
+                      }
+
+    deploy:
+        name: Deploy to target node
+        runs-on: self-hosted
+        needs: check-build
+        environment: production
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up SSH agent
+              uses: webfactory/ssh-agent@v0.9.0
+              with:
+                  ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Add target host to known hosts
+              run: |
+                  ssh-keyscan -H "$TARGET_HOST" >> ~/.ssh/known_hosts
+              env:
+                  TARGET_HOST: ${{ secrets.TARGET_HOST }}
+
+            - name: Set image tag
+              id: tag
+              run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+            - name: Deploy to target node via SSH
+              run: |
+                  ssh "$TARGET_USER@$TARGET_HOST" \
+                    "IMAGE=ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }} \
+                     bash -s" < scripts/deploy.sh
+              env:
+                  TARGET_USER: ${{ secrets.TARGET_USER }}
+                  TARGET_HOST: ${{ secrets.TARGET_HOST }}
+
+            - name: Verify deployment
+              run: |
+                  ssh "$TARGET_USER@$TARGET_HOST" \
+                    "bash -s" < scripts/verify.sh
+              env:
+                  TARGET_USER: ${{ secrets.TARGET_USER }}
+                  TARGET_HOST: ${{ secrets.TARGET_HOST }}
